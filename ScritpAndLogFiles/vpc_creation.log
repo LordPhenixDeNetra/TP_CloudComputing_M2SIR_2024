@@ -1,0 +1,12 @@
+LOG FILE:
+
+
+
+VPC créé avec l'ID : vpc-0d052368fe0229904
+Passerelle Internet créée et attachée avec l'ID : igw-08f25fc8852b6bd3b
+Sous-réseau public créé avec l'ID : subnet-039d8a1aed8574803
+Sous-réseau privé créé avec l'ID : subnet-0dad273d450b7dfa9
+Table de routage pour le sous-réseau public créée avec l'ID : rtb-063cfbf610d31266c
+L'instance est en cours d'exécution avec l' ID: i-0b7f2a27f6447bfe9
+L'instance est en cours d'exécution avec l' ID: i-06e2f851707b85761
+=========================================================================

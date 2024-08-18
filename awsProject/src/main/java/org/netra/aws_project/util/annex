@@ -1,0 +1,219 @@
+import { KeyValuePipe } from '@angular/common';
+import { Component, HostListener, inject, Input, OnChanges, OnInit } from '@angular/core';
+import { AbstractControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { InputErrorsComponent } from 'app/common/input-row/input-errors.component';
+
+
+@Component({
+  selector: 'app-input-row',
+  standalone: true,
+  templateUrl: './input-row.component.html',
+  imports: [ReactiveFormsModule, InputErrorsComponent, KeyValuePipe]
+})
+export class InputRowComponent implements OnChanges, OnInit {
+
+  @Input({ required: true })
+  group?: FormGroup;
+
+  @Input({ required: true })
+  field = '';
+
+  @Input()
+  rowType = 'text';
+
+  @Input()
+  inputClass = '';
+
+  @Input()
+  options?: Record<string,string>|Map<number,string>;
+
+  @Input({ required: true })
+  label = '';
+
+  control?: AbstractControl;
+  optionsMap?: Map<string|number,string>;
+
+  ngOnInit() {
+    this.control = this.group!.get(this.field)!;
+  }
+
+  ngOnChanges() {
+    if (!this.options || this.options instanceof Map) {
+      this.optionsMap = this.options;
+    } else {
+      this.optionsMap = new Map(Object.entries(this.options));
+    }
+  }
+
+  @HostListener('input', ['$event.target'])
+  onEvent(target: HTMLInputElement) {
+    if (target.value === '') {
+      this.control!.setValue(null);
+    }
+  }
+
+  isRequired() {
+    return this.control?.hasValidator(Validators.required);
+  }
+
+  getInputClasses() {
+    return (this.hasErrors() ? 'is-invalid ' : '') + this.inputClass;
+  }
+
+  hasErrors() {
+    return this.control?.invalid && (this.control?.dirty || this.control?.touched);
+  }
+
+}
+
+++++++++++++++++++++++++++++++++++++++++++++++
+
+<div [formGroup]="group!" class="row mb-3">
+    @if (rowType === 'checkbox') {
+    <div class="col-md-10 offset-md-2">
+        <div class="form-check">
+            <input [id]="field" [formControlName]="field" type="checkbox"
+                    class="form-check-input {{ getInputClasses() }}" />
+            <label [for]="field" class="form-check-label">
+                {{ label + (isRequired() ? '*' : '') }}
+            </label>
+        </div>
+        <app-input-errors [control]="control" />
+    </div>
+    } @else {
+    <label [for]="rowType === 'radio' ? '' : field" class="col-md-2 col-form-label">
+        {{ label + (isRequired() ? '*' : '') }}
+    </label>
+    <div class="col-md-10">
+        @if (rowType === 'text' || rowType === 'password' || rowType === 'email' || rowType === 'tel') {
+        <input [id]="field" [type]="rowType" [formControlName]="field"
+                class="form-control {{ getInputClasses() }}" />
+        } @else if (rowType === 'number') {
+        <input [id]="field" type="number" [formControlName]="field"
+                class="form-control {{ getInputClasses() }}" />
+        } @else if (rowType === 'textarea') {
+        <textarea [id]="field" [formControlName]="field"
+                class="form-control {{ getInputClasses() }}"></textarea>
+        } @else if (rowType === 'select') {
+        <select [id]="field" [formControlName]="field"
+                class="form-select {{ getInputClasses() }}">
+            <option [ngValue]="null" i18n="@@select.empty.label">Please select</option>
+            @for (option of optionsMap | keyvalue; track option.key) {
+            <option [ngValue]="option.key">{{ option.value }}</option>
+            }
+        </select>
+        } @else if (rowType === 'multiselect') {
+        <select [id]="field" [formControlName]="field" multiple="true"
+                class="form-select {{ getInputClasses() }}">
+            @for (option of optionsMap | keyvalue; track option.key) {
+            <option [ngValue]="option.key">{{ option.value }}</option>
+            }
+        </select>
+        } @else if (rowType === 'radio') {
+            @if (!isRequired()) {
+            <div class="form-check form-check-inline pt-2">
+                <input [id]="field" [formControlName]="field" [value]="null" type="radio"
+                       class="form-check-input {{ inputClass }}" />
+                <label [for]="field" class="form-check-label" i18n="@@select.empty.label">Please select</label>
+            </div>
+            }
+            @for (option of optionsMap | keyvalue; track option.key) {
+            <div class="form-check form-check-inline pt-2">
+                <input [id]="field + '_' + option.key" [formControlName]="field" [value]="option.key" type="radio"
+                        class="form-check-input {{ getInputClasses() }}" />
+                <label [for]="field + '_' + option.key" class="form-check-label">{{ option.value }}</label>
+            </div>
+            }
+        }
+        <app-input-errors [control]="control" />
+    </div>
+    }
+</div>
+
+==========================================================================
+
+
+import { Component, inject, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { Router, RouterLink } from '@angular/router';
+import {ReactiveFormsModule, FormControl, FormGroup, Validators, FormsModule} from '@angular/forms';
+import { InputRowComponent } from 'app/common/input-row/input-row.component';
+import { InstanceService } from 'app/instance/instance.service';
+import { InstanceDTO } from 'app/instance/instance.model';
+import { ErrorHandler } from 'app/common/error-handler.injectable';
+
+
+@Component({
+  selector: 'app-instance-add',
+  standalone: true,
+  imports: [CommonModule, RouterLink, ReactiveFormsModule, InputRowComponent, FormsModule],
+  templateUrl: './instance-add.component.html'
+})
+export class InstanceAddComponent implements OnInit {
+
+  instanceService = inject(InstanceService);
+  router = inject(Router);
+  errorHandler = inject(ErrorHandler);
+
+  vpcValues?: Map<number,string>;
+
+  addForm = new FormGroup({
+    // instanceId: new FormControl(null, [Validators.maxLength(255)]),
+    isPublic: new FormControl(null),
+    name: new FormControl(null, [Validators.required, Validators.maxLength(255)]),
+    vpc: new FormControl(null)
+  }, { updateOn: 'submit' });
+
+  getMessage(key: string, details?: any) {
+    const messages: Record<string, string> = {
+      created: $localize`:@@instance.create.success:Instance was created successfully.`
+    };
+    return messages[key];
+  }
+
+  ngOnInit() {
+    this.instanceService.getVpcValues()
+        .subscribe({
+          next: (data) => this.vpcValues = data,
+          error: (error) => this.errorHandler.handleServerError(error.error)
+        });
+  }
+
+  handleSubmit() {
+    window.scrollTo(0, 0);
+    this.addForm.markAllAsTouched();
+    if (!this.addForm.valid) {
+      return;
+    }
+
+    const data = new InstanceDTO(this.addForm.value);
+    // this.instanceService.createInstance(data)
+    this.instanceService.createWithInstanceType(data)
+        .subscribe({
+          next: () => this.router.navigate(['/instances'], {
+            state: {
+              msgSuccess: this.getMessage('created')
+            }
+          }),
+          error: (error) => this.errorHandler.handleServerError(error.error, this.addForm, this.getMessage)
+        });
+  }
+
+}
+
+
+++++++++++++++++++++++++++++++++++++++++++++++++
+
+<div class="d-flex flex-wrap mb-4">
+    <h1 class="flex-grow-1" i18n="@@instance.add.headline">Add Instance</h1>
+    <div>
+        <a routerLink="/instances" class="btn btn-secondary" i18n="@@instance.add.back">Back to list</a>
+    </div>
+</div>
+<form [formGroup]="addForm" (ngSubmit)="handleSubmit()">
+<!--    <app-input-row [group]="addForm" field="instanceId" i18n-label="@@instance.instanceId.label" label="Instance Id" />-->
+    <app-input-row [group]="addForm" field="name" i18n-label="@@instance.name.label" label="Name" />
+    <app-input-row [group]="addForm" field="vpc" rowType="select" [options]="vpcValues" i18n-label="@@instance.vpc.label" label="Vpc" />
+    <app-input-row [group]="addForm" field="isPublic" rowType="checkbox" i18n-label="@@instance.isPublic.label" label="Is Public" />
+    <input type="submit" i18n-value="@@instance.add.headline" value="Add Instance" class="btn btn-primary mt-4" />
+</form>

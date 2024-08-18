@@ -1,0 +1,21 @@
+<div class="d-flex flex-wrap mb-4">
+    <h1 class="flex-grow-1" i18n="@@vpc.edit.headline">Edit Vpc</h1>
+    <div>
+        <a routerLink="/vpcs" class="btn btn-secondary" i18n="@@vpc.edit.back">Back to list</a>
+    </div>
+</div>
+<form [formGroup]="editForm" (ngSubmit)="handleSubmit()">
+    <input type="submit" i18n-value="@@vpc.edit.headline" value="Edit Vpc" class="btn btn-primary mt-4 mb-4" />
+    <app-input-row [group]="editForm" field="id" rowType="number" i18n-label="@@vpc.id.label" label="Id" />
+    <app-input-row [group]="editForm" field="vpcId" i18n-label="@@vpc.vpcId.label" label="Vpc Id" />
+    <app-input-row [group]="editForm" field="nom" i18n-label="@@vpc.nom.label" label="Nom" />
+    <app-input-row [group]="editForm" field="vpcCIDR" i18n-label="@@vpc.vpcCIDR.label" label="VpcCIDR" />
+    <app-input-row [group]="editForm" field="subnetPublicCIDR" i18n-label="@@vpc.subnetPublicCIDR.label" label="Subnet PublicCIDR" />
+    <app-input-row [group]="editForm" field="subnetPrivateCIDR" i18n-label="@@vpc.subnetPrivateCIDR.label" label="Subnet PrivateCIDR" />
+    <app-input-row [group]="editForm" field="subnetPublicName" i18n-label="@@vpc.subnetPublicName.label" label="Subnet Public Name" />
+    <app-input-row [group]="editForm" field="subnetPrivateName" i18n-label="@@vpc.subnetPrivateName.label" label="Subnet Private Name" />
+    <app-input-row [group]="editForm" field="iGatewayeId" i18n-label="@@vpc.iGatewayeId.label" label="I Gatewaye Id" />
+    <app-input-row [group]="editForm" field="groupSecPublicName" i18n-label="@@vpc.groupSecPublicName.label" label="Group Sec Public Name" />
+    <app-input-row [group]="editForm" field="groupSecPrivateName" i18n-label="@@vpc.groupSecPrivateName.label" label="Group Sec Private Name" />
+    <input type="submit" i18n-value="@@vpc.edit.headline" value="Edit Vpc" class="btn btn-primary mt-4" />
+</form>
